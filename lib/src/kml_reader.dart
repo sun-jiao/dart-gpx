@@ -40,7 +40,7 @@ class KmlReader {
             author = _readPerson(iterator);
             break;
           case KmlTagV22.extendedData:
-            gpx.metadata = _parseExtendedData(iterator);
+            gpx.metadata = _parseMetadata(iterator);
             break;
           case KmlTagV22.placemark:
             gpx.wpts.add(_readPlacemark(iterator, val.name));
@@ -62,7 +62,7 @@ class KmlReader {
     return gpx;
   }
 
-  Metadata _parseExtendedData(Iterator<XmlEvent> iterator) {
+  Metadata _parseMetadata(Iterator<XmlEvent> iterator) {
     final metadata = Metadata();
     final elm = iterator.current;
 
@@ -78,10 +78,10 @@ class KmlReader {
                   metadata.copyright = _readCopyright(iterator);
                   break;
                 case KmlTagV22.keywords:
-                  metadata.keywords = _readString(iterator, val.name);
+                  metadata.keywords = _readData(iterator, _readString);
                   break;
                 case KmlTagV22.time:
-                  metadata.time = _readExtendedDataDateTime(iterator);
+                  metadata.time = _readData(iterator, _readDateTime);
                   break;
               }
             }
@@ -100,15 +100,7 @@ class KmlReader {
   Wpt _readPlacemark(Iterator<XmlEvent> iterator, String tagName) {
     final wpt = Wpt();
     final elm = iterator.current;
-
-    if (elm is XmlStartElementEvent) {
-      wpt.lat = double.parse(elm.attributes
-          .firstWhere((attr) => attr.name == GpxTagV11.latitude)
-          .value);
-      wpt.lon = double.parse(elm.attributes
-          .firstWhere((attr) => attr.name == GpxTagV11.longitude)
-          .value);
-    }
+    Wpt? ext;
 
     if ((elm is XmlStartElementEvent) && !elm.isSelfClosing) {
       while (iterator.moveNext()) {
@@ -116,77 +108,21 @@ class KmlReader {
 
         if (val is XmlStartElementEvent) {
           switch (val.name) {
-            case GpxTagV11.sym:
-              wpt.sym = _readString(iterator, val.name);
-              break;
-
-            case GpxTagV11.fix:
-              final fixAsString = _readString(iterator, val.name);
-              wpt.fix = FixType.values.firstWhere(
-                      (e) =>
-                  e.toString().replaceFirst('.fix_', '.') ==
-                      'FixType.$fixAsString',
-                  orElse: () => FixType.unknown);
-
-              if (wpt.fix == FixType.unknown) {
-                wpt.fix = null;
-              }
-              break;
-
-            case GpxTagV11.dGPSId:
-              wpt.dgpsid = _readInt(iterator, val.name);
-              break;
-
-            case GpxTagV11.name:
+            case KmlTagV22.name:
               wpt.name = _readString(iterator, val.name);
               break;
-            case GpxTagV11.desc:
+            case KmlTagV22.desc:
               wpt.desc = _readString(iterator, val.name);
               break;
-            case GpxTagV11.comment:
-              wpt.cmt = _readString(iterator, val.name);
-              break;
-            case GpxTagV11.src:
-              wpt.src = _readString(iterator, val.name);
-              break;
-            case GpxTagV11.link:
+            case KmlTagV22.link:
               wpt.links.add(_readLink(iterator));
               break;
-            case GpxTagV11.hDOP:
-              wpt.hdop = _readDouble(iterator, val.name);
+            case KmlTagV22.extendedData:
+              ext = _readExtended(iterator);
               break;
-            case GpxTagV11.vDOP:
-              wpt.vdop = _readDouble(iterator, val.name);
-              break;
-            case GpxTagV11.pDOP:
-              wpt.pdop = _readDouble(iterator, val.name);
-              break;
-            case GpxTagV11.ageOfData:
-              wpt.ageofdgpsdata = _readDouble(iterator, val.name);
-              break;
-
-            case GpxTagV11.magVar:
-              wpt.magvar = _readDouble(iterator, val.name);
-              break;
-            case GpxTagV11.geoidHeight:
-              wpt.geoidheight = _readDouble(iterator, val.name);
-              break;
-
-            case GpxTagV11.sat:
-              wpt.sat = _readInt(iterator, val.name);
-              break;
-
-            case GpxTagV11.elevation:
-              wpt.ele = _readDouble(iterator, val.name);
-              break;
-            case GpxTagV11.time:
-              wpt.time = _readDateTime(iterator, val.name);
-              break;
-            case GpxTagV11.type:
-              wpt.type = _readString(iterator, val.name);
-              break;
-            case GpxTagV11.extensions:
-              wpt.extensions = _readExtensions(iterator);
+            case KmlTagV22.timestamp:
+              wpt.time = _readData(iterator, _readDateTime,
+                  tagName: KmlTagV22.when);
               break;
           }
         }
@@ -197,14 +133,13 @@ class KmlReader {
       }
     }
 
+    if (ext != null){
+
+    }
+
     return wpt;
   }
-
-  DateTime? _readDateTime(Iterator<XmlEvent> iterator, String tagName) {
-    final dateTimeString = _readString(iterator, tagName);
-    return dateTimeString != null ? DateTime.parse(dateTimeString) : null;
-  }
-
+  
   double? _readDouble(Iterator<XmlEvent> iterator, String tagName) {
     final doubleString = _readString(iterator, tagName);
     return doubleString != null ? double.parse(doubleString) : null;
@@ -215,29 +150,9 @@ class KmlReader {
     return intString != null ? int.parse(intString) : null;
   }
 
-  DateTime? _readExtendedDataDateTime(Iterator<XmlEvent> iterator) {
-    final elm = iterator.current;
-
-    if (elm is XmlStartElementEvent) {
-      if (!elm.isSelfClosing) {
-        while (iterator.moveNext()) {
-          final val = iterator.current;
-
-          if (val is XmlStartElementEvent) {
-            if (val.name == KmlTagV22.value){
-
-              final dateTimeString = _readString(iterator, val.name);
-              return dateTimeString != null ? DateTime.parse(dateTimeString.trim()) : null;
-            }
-          }
-
-          if (val is XmlEndElementEvent && val.name == KmlTagV22.data) {
-            break;
-          }
-        }
-      }
-    }
-    return null;
+  DateTime? _readDateTime(Iterator<XmlEvent> iterator, String tagName) {
+    final dateTimeString = _readString(iterator, tagName);
+    return dateTimeString != null ? DateTime.parse(dateTimeString) : null;
   }
 
   String? _readString(Iterator<XmlEvent> iterator, String tagName) {
@@ -268,31 +183,94 @@ class KmlReader {
     return string.trim();
   }
 
-  Map<String, String> _readExtensions(Iterator<XmlEvent> iterator) {
-    final exts = <String, String>{};
+  T? _readData<T>(Iterator<XmlEvent> iterator,
+      T? Function(Iterator<XmlEvent> iterator, String tagName) function,
+      {String? tagName}) {
+    tagName ??= KmlTagV22.value;
+
     final elm = iterator.current;
 
-    /*if (elm is XmlStartElementEvent) {
-      link.href = elm.attributes
-          .firstWhere((attr) => attr.name == GpxTagV11.href)
-          .value;
-    }*/
+    if (elm is XmlStartElementEvent) {
+      if (!elm.isSelfClosing) {
+        while (iterator.moveNext()) {
+          final val = iterator.current;
+
+          if (val is XmlStartElementEvent) {
+            if (val.name == tagName){
+              return function(iterator, tagName);
+            }
+
+            if (elm.isSelfClosing && val.name == KmlTagV22.data) {
+              break;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  Wpt _readExtended(Iterator<XmlEvent> iterator) {
+    final wpt = Wpt();
+    final elm = iterator.current;
 
     if ((elm is XmlStartElementEvent) && !elm.isSelfClosing) {
       while (iterator.moveNext()) {
         final val = iterator.current;
 
-        if (val is XmlStartElementEvent) {
-          exts[val.name] = _readString(iterator, val.name) ?? '';
+        if (val is XmlStartElementEvent && val.name == KmlTagV22.data) {
+          for (final attribute in val.attributes){
+            if (attribute.name == KmlTagV22.name){
+              switch (attribute.value) {
+                case GpxTagV11.magVar:
+                  wpt.magvar = _readData(iterator, _readDouble);
+                  break;
+
+                case GpxTagV11.sat:
+                  wpt.sat = _readData(iterator, _readInt);
+                  break;
+                case GpxTagV11.src:
+                  wpt.src = _readData(iterator, _readString);
+                  break;
+                  
+                case GpxTagV11.hDOP:
+                  wpt.hdop = _readData(iterator, _readDouble);
+                  break;
+                case GpxTagV11.vDOP:
+                  wpt.vdop = _readData(iterator, _readDouble);
+                  break;
+                case GpxTagV11.pDOP:
+                  wpt.pdop = _readData(iterator, _readDouble);
+                  break;
+
+                case GpxTagV11.geoidHeight:
+                  wpt.geoidheight = _readData(iterator, _readDouble);
+                  break;
+                case GpxTagV11.ageOfData:
+                  wpt.ageofdgpsdata = _readData(iterator, _readDouble);
+                  break;
+                case GpxTagV11.dGPSId:
+                  wpt.dgpsid = _readData(iterator, _readInt);
+                  break;
+                  
+                case GpxTagV11.comment:
+                  wpt.cmt = _readData(iterator, _readString);
+                  break;
+                case GpxTagV11.type:
+                  wpt.type = _readData(iterator, _readString);
+                  break;
+              }
+            }
+          }
         }
 
-        if (val is XmlEndElementEvent && val.name == GpxTagV11.extensions) {
+        if (val is XmlEndElementEvent && val.name == KmlTagV22.extendedData) {
           break;
         }
       }
     }
 
-    return exts;
+    return wpt;
   }
 
   Link _readLink(Iterator<XmlEvent> iterator) {
@@ -343,7 +321,7 @@ class KmlReader {
               person.name = _readString(iterator, val.name);
               break;
             case KmlTagV22.email:
-              person.email = _getEmail(_readString(iterator, val.name));
+              person.email = _readEmail(iterator);
               break;
             case KmlTagV22.uri:
               person.link = Link(href: _readString(iterator, val.name) ?? '');
@@ -373,13 +351,14 @@ class KmlReader {
             if (val.name == KmlTagV22.value){
               final copyrightText = _readString(iterator, val.name);
               if (copyrightText != null){
-                final copyrightTexts = copyrightText.split(', ');
+                final copyrightSplit = copyrightText.split(', ');
 
-                if (copyrightTexts.length != 2){
-                  throw const FormatException('Supplied copyright text is wrong.');
+                if (copyrightSplit.length != 2){
+                  throw const FormatException(
+                      'Supplied copyright text is not right.');
                 } else {
-                  copyright.author = copyrightTexts[0];
-                  copyright.year = int.parse(copyrightTexts[1]);
+                  copyright.author = copyrightSplit[0];
+                  copyright.year = int.parse(copyrightSplit[1]);
                 }
               }
             }
@@ -395,20 +374,25 @@ class KmlReader {
     return copyright;
   }
 
-  Email _getEmail(String? emailString) {
+  Email _readEmail(Iterator<XmlEvent> iterator) {
     final email = Email();
+    final elm = iterator.current;
 
-    if (emailString == null){
-      return email;
-    }
+    if (elm is XmlStartElementEvent) {
+      if (elm.name == KmlTagV22.email){
+        final emailText = _readString(iterator, KmlTagV22.email);
+        if (emailText != null){
+          final emailSplit = emailText.split('@');
 
-    final emailStrings = emailString.split('@');
-
-    if (emailStrings.length != 2){
-      throw const FormatException('Supplied email address is wrong.');
-    } else {
-      email.id = emailStrings[0];
-      email.domain = emailStrings[1];
+          if (emailSplit.length != 2){
+            throw const FormatException(
+                'Supplied email address is not in the right format.');
+          } else {
+            email.id = emailSplit[0];
+            email.domain = emailSplit[1];
+          }
+        }
+      }
     }
 
     return email;

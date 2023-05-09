@@ -68,16 +68,16 @@ class KmlWriter {
     _writeElement(builder, KmlTagV22.desc, metadata.desc);
 
     if (metadata.author != null) {
-      builder.element('atom:author', nest: () {
-        _writeElement(builder, 'atom:name', metadata.author?.name);
+      builder.element(KmlTagV22.author, nest: () {
+        _writeElement(builder, KmlTagV22.authorName, metadata.author?.name);
         if (metadata.author?.email?.id != null &&
             metadata.author?.email?.domain != null) {
           final email =
               '${metadata.author!.email!.id}@${metadata.author!.email!.domain}';
-          _writeElement(builder, 'atom:email', email);
+          _writeElement(builder, KmlTagV22.email, email);
         }
 
-        _writeElement(builder, 'atom:uri', metadata.author?.link?.href);
+        _writeElement(builder, KmlTagV22.uri, metadata.author?.link?.href);
       });
     }
 
@@ -201,7 +201,7 @@ class KmlWriter {
 
   void _writeAtomLinks(XmlBuilder builder, List<Link> value) {
     for (final link in value) {
-      builder.element('atom:link', nest: link.href);
+      builder.element(KmlTagV22.link, nest: link.href);
     }
   }
 

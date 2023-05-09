@@ -23,6 +23,8 @@ class KmlTagV22 {
   static const copyright = 'copyright';
   static const keywords = 'keywords';
   static const time = 'time';
+  
+  static const link = 'atom:link';
 
   static const value = 'value';
 
