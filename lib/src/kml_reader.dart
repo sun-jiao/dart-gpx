@@ -192,11 +192,11 @@ class KmlReader {
       final val = iterator.current;
 
       if (val is XmlTextEvent) {
-        string += val.value;
+        string += val.text;
       }
 
       if (val is XmlCDATAEvent) {
-        string += val.value;
+        string += val.text;
       }
 
       if (val is XmlEndElementEvent && val.name == tagName) {
