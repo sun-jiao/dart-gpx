@@ -32,6 +32,8 @@ class KmlReader {
 
       if (val is XmlStartElementEvent) {
         switch (val.name) {
+          case KmlTagV22.document:
+            break;
           case KmlTagV22.kml:
             break;
           case KmlTagV22.name:
@@ -48,6 +50,8 @@ class KmlReader {
             break;
           case KmlTagV22.placemark:
             gpx.wpts.add(_readPlacemark(iterator, val.name));
+            break;
+          default:
             break;
         }
       }
@@ -138,6 +142,9 @@ class KmlReader {
               wpt.lon = coor.lon;
               wpt.lat = coor.lat;
               wpt.ele = coor.ele;
+              break;
+            default:
+              break;
           }
         }
 
@@ -299,13 +306,32 @@ class KmlReader {
   
   Wpt _readCoordinate(Iterator<XmlEvent> iterator){
     final wpt = Wpt();
-    final coordinate = _readData(iterator, _readString,
-        tagName: KmlTagV22.coordinates);
-    final list = coordinate?.split(',');
-    if (list != null && list.length >= 3){
-      wpt.lon = double.parse(list[0]);
-      wpt.lat = double.parse(list[1]);
-      wpt.ele = double.parse(list[2]);
+    final elm = iterator.current;
+
+    if ((elm is XmlStartElementEvent) && !elm.isSelfClosing) {
+      while (iterator.moveNext()) {
+        final val = iterator.current;
+
+        if (val is XmlStartElementEvent) {
+          switch (val.name) {
+            case KmlTagV22.altitudeMode:
+              break;
+            case KmlTagV22.coordinates:
+              final coordinate = _readString(iterator, KmlTagV22.coordinates);
+              final list = coordinate?.split(',');
+              if (list != null && list.length >= 3){
+                wpt.lon = double.parse(list[0]);
+                wpt.lat = double.parse(list[1]);
+                wpt.ele = double.parse(list[2]);
+              }
+              break;
+          }
+        }
+
+        if (val is XmlEndElementEvent && val.name == KmlTagV22.point) {
+          break;
+        }
+      }
     }
 
     return wpt;
