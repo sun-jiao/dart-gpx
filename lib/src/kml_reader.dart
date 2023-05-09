@@ -1,10 +1,10 @@
-import 'package:gpx/src/model/kml_tag.dart';
 import 'package:xml/xml_events.dart';
 
 import 'model/copyright.dart';
 import 'model/email.dart';
 import 'model/gpx.dart';
 import 'model/gpx_tag.dart';
+import 'model/kml_tag.dart';
 import 'model/link.dart';
 import 'model/metadata.dart';
 import 'model/person.dart';
@@ -24,6 +24,7 @@ class KmlReader {
     // ignore: avoid_as
     final gpx = Gpx();
     String? kmlName;
+    String? desc;
     Person? author;
 
     while (iterator.moveNext()) {
@@ -35,6 +36,9 @@ class KmlReader {
             break;
           case KmlTagV22.name:
             kmlName = _readString(iterator, val.name);
+            break;
+          case KmlTagV22.desc:
+            desc = _readString(iterator, val.name);
             break;
           case KmlTagV22.author:
             author = _readPerson(iterator);
@@ -57,6 +61,11 @@ class KmlReader {
     if (author != null){
       gpx.metadata ??= Metadata();
       gpx.metadata!.author = author;
+    }
+
+    if (author != null){
+      gpx.metadata ??= Metadata();
+      gpx.metadata!.desc = desc;
     }
 
     return gpx;
@@ -124,6 +133,11 @@ class KmlReader {
               wpt.time = _readData(iterator, _readDateTime,
                   tagName: KmlTagV22.when);
               break;
+            case KmlTagV22.point:
+              final coor = _readCoordinate(iterator);
+              wpt.lon = coor.lon;
+              wpt.lat = coor.lat;
+              wpt.ele = coor.ele;
           }
         }
 
@@ -134,7 +148,17 @@ class KmlReader {
     }
 
     if (ext != null){
-
+      wpt.magvar = ext.magvar;
+      wpt.sat = ext.sat;
+      wpt.src = ext.src;
+      wpt.hdop = ext.hdop;
+      wpt.vdop = ext.vdop;
+      wpt.pdop = ext.pdop;
+      wpt.geoidheight = ext.geoidheight;
+      wpt.ageofdgpsdata = ext.ageofdgpsdata;
+      wpt.dgpsid = ext.dgpsid;
+      wpt.cmt = ext.cmt;
+      wpt.type = ext.type;
     }
 
     return wpt;
@@ -272,6 +296,20 @@ class KmlReader {
 
     return wpt;
   }
+  
+  Wpt _readCoordinate(Iterator<XmlEvent> iterator){
+    final wpt = Wpt();
+    final coordinate = _readData(iterator, _readString,
+        tagName: KmlTagV22.coordinates);
+    final list = coordinate?.split(',');
+    if (list != null && list.length >= 3){
+      wpt.lon = double.parse(list[0]);
+      wpt.lat = double.parse(list[1]);
+      wpt.ele = double.parse(list[2]);
+    }
+
+    return wpt;
+  }
 
   Link _readLink(Iterator<XmlEvent> iterator) {
     final link = Link();
@@ -398,3 +436,4 @@ class KmlReader {
     return email;
   }
 }
+
