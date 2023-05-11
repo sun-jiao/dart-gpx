@@ -15,7 +15,7 @@ class GpxObject{
   String? src;
 
   /// Links to external information about the object.
-  late List<Link> links;
+  List<Link> links = [];
 
   /// GPS track number.
   int? number;
@@ -25,7 +25,7 @@ class GpxObject{
 
   /// You can add extend GPX by adding your own elements from another schema
   /// here.
-  late Map<String, String> extensions;
+  Map<String, String> extensions = {};
 
   // Element tag.
   late String tag;

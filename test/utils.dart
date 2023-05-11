@@ -110,23 +110,6 @@ Gpx createMetadataGPX() {
   return gpx;
 }
 
-Gpx createMetadataKml() {
-  final gpx = Gpx();
-  gpx.metadata = Metadata();
-  gpx.metadata!.name = 'routes';
-  gpx.metadata!.desc = 'desc';
-  gpx.metadata!.author = Person(
-      name: 'name',
-      email: Email(id: 'mail', domain: 'mail.com'),
-      link: Link(href: 'http://google.com/'));
-  gpx.metadata!.time = DateTime.utc(2010, 1, 2, 3, 4, 5);
-  gpx.metadata!.copyright =
-      Copyright(author: 'lib', year: 2019);
-  gpx.metadata!.keywords = 'k1,k2,k3';
-
-  return gpx;
-}
-
 Gpx createComplexGPX() {
   final gpx = createMinimalGPX();
   gpx.metadata = Metadata();

@@ -44,6 +44,9 @@ class KmlReader {
           case KmlTagV22.desc:
             desc = _readString(iterator, val.name);
             break;
+          case GpxTagV11.desc:
+            desc = _readString(iterator, val.name);
+            break;
           case KmlTagV22.author:
             author = _readPerson(iterator);
             break;
@@ -57,8 +60,6 @@ class KmlReader {
             } else if (item is Rte) {
               gpx.rtes.add(item);
             }
-            break;
-          default:
             break;
         }
       }
@@ -74,7 +75,7 @@ class KmlReader {
       gpx.metadata!.author = author;
     }
 
-    if (author != null){
+    if (desc != null){
       gpx.metadata ??= Metadata();
       gpx.metadata!.desc = desc;
     }
@@ -117,11 +118,13 @@ class KmlReader {
     return metadata;
   }
   
-  Object _readPlacemark(Iterator<XmlEvent> iterator, String tagName) {
-    var item = GpxObject();
+  GpxObject _readPlacemark(Iterator<XmlEvent> iterator, String tagName) {
+    final item = GpxObject();
     final elm = iterator.current;
     DateTime? time;
     Wpt? ext;
+    Wpt? wpt;
+    Rte? rte;
 
     if ((elm is XmlStartElementEvent) && !elm.isSelfClosing) {
       while (iterator.moveNext()) {
@@ -135,8 +138,14 @@ class KmlReader {
             case KmlTagV22.desc:
               item.desc = _readString(iterator, val.name);
               break;
+            case GpxTagV11.desc:
+              item.desc = _readString(iterator, val.name);
+              break;
             case KmlTagV22.link:
-              item.links.add(_readLink(iterator));
+              final hrefStr = _readString(iterator, val.name);
+              if (hrefStr != null){
+                item.links.add(Link(href: hrefStr));
+              }
               break;
             case KmlTagV22.extendedData:
               ext = _readExtended(iterator);
@@ -146,17 +155,15 @@ class KmlReader {
                   tagName: KmlTagV22.when);
               break;
             case KmlTagV22.point:
-              final coor = _readCoordinate(iterator);
-              item = item as Wpt;
-              item.lon = coor.lon;
-              item.lat = coor.lat;
-              item.ele = coor.ele;
+              final coorList = _readCoordinate(iterator, val.name);
+              if (coorList.length == 1){
+                wpt = coorList.first;
+              }
               break;
             case KmlTagV22.track:
             case KmlTagV22.ring:
-
-              break;
-            default:
+              rte = Rte();
+              rte.rtepts = _readCoordinate(iterator, val.name);
               break;
           }
         }
@@ -167,18 +174,48 @@ class KmlReader {
       }
     }
 
-    if (item is Wpt && ext != null){
-      item.magvar = ext.magvar;
-      item.sat = ext.sat;
-      item.src = ext.src;
-      item.hdop = ext.hdop;
-      item.vdop = ext.vdop;
-      item.pdop = ext.pdop;
-      item.geoidheight = ext.geoidheight;
-      item.ageofdgpsdata = ext.ageofdgpsdata;
-      item.dgpsid = ext.dgpsid;
-      item.cmt = ext.cmt;
-      item.type = ext.type;
+    if (wpt != null){
+      wpt.name = item.name;
+      wpt.desc = item.desc;
+      wpt.links = item.links;
+      if (time != null){
+        wpt.time = time;
+      }
+
+      if (ext != null){
+        wpt.magvar = ext.magvar;
+        wpt.sat = ext.sat;
+        wpt.src = ext.src;
+        wpt.hdop = ext.hdop;
+        wpt.vdop = ext.vdop;
+        wpt.pdop = ext.pdop;
+        wpt.geoidheight = ext.geoidheight;
+        wpt.ageofdgpsdata = ext.ageofdgpsdata;
+        wpt.dgpsid = ext.dgpsid;
+        wpt.cmt = ext.cmt;
+        wpt.type = ext.type;
+        wpt.number = ext.number;
+      }
+
+      return wpt;
+    } else if (rte is Rte){
+      rte.name = item.name;
+      rte.desc = item.desc;
+      rte.links = item.links;
+      if (time != null){
+        for (final wpt in rte.rtepts) {
+          wpt.time = time;
+        }
+      }
+
+      if (ext != null){
+        rte.src = ext.src;
+        rte.cmt = ext.cmt;
+        rte.type = ext.type;
+        rte.number = ext.number;
+      }
+
+      return rte;
     }
 
     return item;
@@ -303,6 +340,8 @@ class KmlReader {
                 case GpxTagV11.type:
                   wpt.type = _readData(iterator, _readString);
                   break;
+                case GpxTagV11.number:
+                  wpt.number = _readData(iterator, _readInt);
               }
             }
           }
@@ -317,8 +356,8 @@ class KmlReader {
     return wpt;
   }
   
-  Wpt _readCoordinate(Iterator<XmlEvent> iterator){
-    final wpt = Wpt();
+  List<Wpt> _readCoordinate(Iterator<XmlEvent> iterator, String tagName){
+    final wpts = <Wpt>[];
     final elm = iterator.current;
 
     if ((elm is XmlStartElementEvent) && !elm.isSelfClosing) {
@@ -330,58 +369,32 @@ class KmlReader {
             case KmlTagV22.altitudeMode:
               break;
             case KmlTagV22.coordinates:
-              final coordinate = _readString(iterator, KmlTagV22.coordinates);
-              final list = coordinate?.split(',');
-              if (list != null && list.length >= 3){
-                wpt.lon = double.parse(list[0]);
-                wpt.lat = double.parse(list[1]);
-                wpt.ele = double.parse(list[2]);
+              final coorStr = _readString(iterator, KmlTagV22.coordinates);
+              if (coorStr == null){
+                break;
+              }
+              final coorStrList = coorStr.split(' ');
+              for (final str in coorStrList){
+                final list = str.split(',');
+                if (list.length == 3){
+                  final wpt = Wpt();
+                  wpt.lon = double.parse(list[0]);
+                  wpt.lat = double.parse(list[1]);
+                  wpt.ele = double.parse(list[2]);
+                  wpts.add(wpt);
+                }
               }
               break;
           }
         }
 
-        if (val is XmlEndElementEvent && val.name == KmlTagV22.point) {
+        if (val is XmlEndElementEvent && val.name == tagName) {
           break;
         }
       }
     }
 
-    return wpt;
-  }
-
-  Link _readLink(Iterator<XmlEvent> iterator) {
-    final link = Link();
-    final elm = iterator.current;
-
-    if (elm is XmlStartElementEvent) {
-      link.href = elm.attributes
-          .firstWhere((attr) => attr.name == GpxTagV11.href)
-          .value;
-    }
-
-    if ((elm is XmlStartElementEvent) && !elm.isSelfClosing) {
-      while (iterator.moveNext()) {
-        final val = iterator.current;
-
-        if (val is XmlStartElementEvent) {
-          switch (val.name) {
-            case GpxTagV11.text:
-              link.text = _readString(iterator, val.name);
-              break;
-            case GpxTagV11.type:
-              link.type = _readString(iterator, val.name);
-              break;
-          }
-        }
-
-        if (val is XmlEndElementEvent && val.name == GpxTagV11.link) {
-          break;
-        }
-      }
-    }
-
-    return link;
+    return wpts;
   }
 
   Person _readPerson(Iterator<XmlEvent> iterator) {

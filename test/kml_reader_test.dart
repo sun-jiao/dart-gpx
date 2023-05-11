@@ -5,13 +5,13 @@ import 'dart:io';
 import 'package:gpx/gpx.dart';
 import 'package:test/test.dart';
 
-import 'utils.dart';
+import 'kml_utils.dart';
 
 void main() {
   test('read kml with multiply points', () async {
     final kml = KmlReader()
         .fromString(await File('test/assets/wpt.kml').readAsString());
-    final src = createGPXWithWpt();
+    final src = createKmlWithWpt();
 
     expect(kml, src);
   });
@@ -19,7 +19,7 @@ void main() {
   test('read kml with multiply points', () async {
     final kml = KmlReader()
         .fromString(await File('test/assets/wpt.kml').readAsString());
-    final src = createGPXWithWpt();
+    final src = createKmlWithWpt();
 
     expect(kml, src);
   });
@@ -43,11 +43,11 @@ void main() {
   test('read complex kml', () async {
     final kml = KmlReader()
         .fromString(await File('test/assets/complex.kml').readAsString());
-    final src = createComplexGPX();
+    final src = createComplexKml();
 
     expect(kml.metadata, src.metadata);
     expect(kml.extensions, src.extensions);
-    expect(kml.trks, src.trks);
+    expect(kml.wpts, src.wpts);
     expect(kml.rtes, src.rtes);
     expect(kml, src);
   });
@@ -65,9 +65,8 @@ void main() {
     final kml = KmlReader()
         .fromString(await File('test/assets/large.kml').readAsString());
 
-    expect(kml.trks.length, 1);
-    expect(kml.trks.first.trksegs.length, 1);
-    expect(kml.trks.first.trksegs.first.trkpts.length, 8139);
+    expect(kml.rtes.length, 1);
+    expect(kml.rtes.first.rtepts.length, 8139);
   });
 
   test('read simple kml', () {
@@ -102,18 +101,10 @@ void main() {
     expect(kml.wpts.first.name, 'khm');
     expect(kml.wpts.first.src, 'network');
 
-    expect(kml.trks.length, 1);
-    expect(kml.trks.first.trksegs.length, 1);
-    expect(kml.trks.first.trksegs.first.trkpts.length, 2);
-    expect(kml.trks.first.trksegs.first.trkpts.last.lat, 48.19948359);
-    expect(kml.trks.first.trksegs.first.trkpts.last.lon, 16.40371021);
-    expect(kml.trks.first.trksegs.first.trkpts.last.ele, 212.0);
-    expect(kml.trks.first.trksegs.first.trkpts.last.sat, 2);
-    expect(kml.trks.first.trksegs.first.trkpts.last.hdop, 0.7);
-    expect(kml.trks.first.trksegs.first.trkpts.last.vdop, 0.8);
-    expect(kml.trks.first.trksegs.first.trkpts.last.pdop, 1.1);
-    expect(kml.trks.first.trksegs.first.trkpts.last.src, 'gps');
-    expect(kml.trks.first.trksegs.first.trkpts.last.time,
-        DateTime.utc(2016, 8, 21, 12, 24, 31));
+    expect(kml.rtes.length, 1);
+    expect(kml.rtes.first.rtepts.length, 2);
+    expect(kml.rtes.first.rtepts.last.lat, 48.19948359);
+    expect(kml.rtes.first.rtepts.last.lon, 16.40371021);
+    expect(kml.rtes.first.rtepts.last.ele, 212.0);
   });
 }

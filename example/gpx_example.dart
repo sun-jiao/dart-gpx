@@ -27,6 +27,7 @@ Future<void> main() async {
         ele: 10.1,
         time: DateTime.now(),
         name: 'Monte Quemado',
+        cmt: 'test',
         desc: 'Argentina'),
     Wpt(
         lat: 36.62,
@@ -57,6 +58,8 @@ Future<void> main() async {
       '</gpx>');
   print(xmlGpx);
 
-  final kml = GpxReader().fromString(await File('test/assets/metadata.gpx').readAsString());
+  final kml = KmlReader()
+      .fromString(await File('test/assets/rte.kml').readAsString());
+  final kmlItem = KmlReader().fromString(kmlString);
   print(KmlWriter().asString(kml, pretty: true));
 }
