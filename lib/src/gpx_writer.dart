@@ -105,7 +105,7 @@ class GpxWriter {
   }
 
   void _writeTrackRoute(XmlBuilder builder, TrkRte trk) {
-    builder.element(GpxTagV11.track, nest: () {
+    builder.element(trk is Trk ? GpxTagV11.track : GpxTagV11.route, nest: () {
       _writeElement(builder, GpxTagV11.name, trk.name);
       _writeElement(builder, GpxTagV11.desc, trk.desc);
       _writeElement(builder, GpxTagV11.comment, trk.cmt);
