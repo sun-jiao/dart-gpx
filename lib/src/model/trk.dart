@@ -1,36 +1,50 @@
 import 'package:collection/collection.dart';
+import 'package:gpx/src/model/gpx_tag.dart';
+import 'package:gpx/src/model/trk_rte.dart';
 import 'package:quiver/core.dart';
 
 import 'link.dart';
 import 'trkseg.dart';
 
 /// Trk represents a track - an ordered list of points describing a path.
-class Trk {
+class Trk implements TrkRte {
   /// GPS name of track.
+  @override
   String? name;
 
   /// GPS comment for track.
+  @override
   String? cmt;
 
   /// User description of track.
+  @override
   String? desc;
 
   /// Source of data. Included to give user some idea of reliability and
   /// accuracy of data.
+  @override
   String? src;
 
   /// Links to external information about the track.
+  @override
   List<Link> links;
 
   /// GPS track number.
+  @override
   int? number;
 
   /// Type (classification) of track.
+  @override
   String? type;
 
   /// You can add extend GPX by adding your own elements from another schema
   /// here.
+  @override
   Map<String, String> extensions;
+
+  // Element tag.
+  @override
+  String tag = GpxTagV11.track;
 
   /// A Track Segment holds a list of Track Points which are logically connected
   /// in order. To represent a single GPS track where GPS reception was lost, or

@@ -10,6 +10,7 @@ class KmlTagV22 {
 
   static const point = 'Point';
   static const track = 'LineString';
+  static const ring = 'LinearRing';
   static const coordinates = 'coordinates';
 
   static const extendedData = 'ExtendedData';

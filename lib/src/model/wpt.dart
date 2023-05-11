@@ -137,6 +137,10 @@ class Wpt {
     return false;
   }
 
+  bool coordinateEqual(Wpt other) => other.lat == lat &&
+        other.lon == lon &&
+        other.ele == ele;
+
   @override
   String toString() =>
       "Wpt[${[lat, lon, ele, time, name, src, extensions].join(",")}]";
