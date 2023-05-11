@@ -1,13 +1,13 @@
 import 'package:xml/xml.dart';
 
 import 'model/gpx.dart';
+import 'model/gpx_object.dart';
 import 'model/gpx_tag.dart';
 import 'model/kml_tag.dart';
 import 'model/link.dart';
 import 'model/metadata.dart';
 import 'model/rte.dart';
 import 'model/trk.dart';
-import 'model/trk_rte.dart';
 import 'model/wpt.dart';
 
 /// KML 2.2 AltitudeMode values
@@ -97,7 +97,7 @@ class KmlWriter {
     });
   }
 
-  void _writeTrackRoute(XmlBuilder builder, TrkRte item) {
+  void _writeTrackRoute(XmlBuilder builder, GpxObject item) {
     builder.element(KmlTagV22.placemark, nest: () {
       _writeElement(builder, GpxTagV11.name, item.name);
       _writeElement(builder, GpxTagV11.desc, item.desc);

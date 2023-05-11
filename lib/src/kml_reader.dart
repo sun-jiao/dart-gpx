@@ -1,3 +1,4 @@
+import 'package:gpx/src/model/gpx_object.dart';
 import 'package:xml/xml_events.dart';
 
 import 'model/copyright.dart';
@@ -8,6 +9,7 @@ import 'model/kml_tag.dart';
 import 'model/link.dart';
 import 'model/metadata.dart';
 import 'model/person.dart';
+import 'model/rte.dart';
 import 'model/wpt.dart';
 
 /// Read Gpx from string
@@ -49,7 +51,12 @@ class KmlReader {
             gpx.metadata = _parseMetadata(iterator);
             break;
           case KmlTagV22.placemark:
-            gpx.wpts.add(_readPlacemark(iterator, val.name));
+            final item = _readPlacemark(iterator, val.name);
+            if (item is Wpt) {
+              gpx.wpts.add(item);
+            } else if (item is Rte) {
+              gpx.rtes.add(item);
+            }
             break;
           default:
             break;
@@ -110,9 +117,10 @@ class KmlReader {
     return metadata;
   }
   
-  Wpt _readPlacemark(Iterator<XmlEvent> iterator, String tagName) {
-    final wpt = Wpt();
+  Object _readPlacemark(Iterator<XmlEvent> iterator, String tagName) {
+    var item = GpxObject();
     final elm = iterator.current;
+    DateTime? time;
     Wpt? ext;
 
     if ((elm is XmlStartElementEvent) && !elm.isSelfClosing) {
@@ -122,26 +130,31 @@ class KmlReader {
         if (val is XmlStartElementEvent) {
           switch (val.name) {
             case KmlTagV22.name:
-              wpt.name = _readString(iterator, val.name);
+              item.name = _readString(iterator, val.name);
               break;
             case KmlTagV22.desc:
-              wpt.desc = _readString(iterator, val.name);
+              item.desc = _readString(iterator, val.name);
               break;
             case KmlTagV22.link:
-              wpt.links.add(_readLink(iterator));
+              item.links.add(_readLink(iterator));
               break;
             case KmlTagV22.extendedData:
               ext = _readExtended(iterator);
               break;
             case KmlTagV22.timestamp:
-              wpt.time = _readData(iterator, _readDateTime,
+              time = _readData(iterator, _readDateTime,
                   tagName: KmlTagV22.when);
               break;
             case KmlTagV22.point:
               final coor = _readCoordinate(iterator);
-              wpt.lon = coor.lon;
-              wpt.lat = coor.lat;
-              wpt.ele = coor.ele;
+              item = item as Wpt;
+              item.lon = coor.lon;
+              item.lat = coor.lat;
+              item.ele = coor.ele;
+              break;
+            case KmlTagV22.track:
+            case KmlTagV22.ring:
+
               break;
             default:
               break;
@@ -154,21 +167,21 @@ class KmlReader {
       }
     }
 
-    if (ext != null){
-      wpt.magvar = ext.magvar;
-      wpt.sat = ext.sat;
-      wpt.src = ext.src;
-      wpt.hdop = ext.hdop;
-      wpt.vdop = ext.vdop;
-      wpt.pdop = ext.pdop;
-      wpt.geoidheight = ext.geoidheight;
-      wpt.ageofdgpsdata = ext.ageofdgpsdata;
-      wpt.dgpsid = ext.dgpsid;
-      wpt.cmt = ext.cmt;
-      wpt.type = ext.type;
+    if (item is Wpt && ext != null){
+      item.magvar = ext.magvar;
+      item.sat = ext.sat;
+      item.src = ext.src;
+      item.hdop = ext.hdop;
+      item.vdop = ext.vdop;
+      item.pdop = ext.pdop;
+      item.geoidheight = ext.geoidheight;
+      item.ageofdgpsdata = ext.ageofdgpsdata;
+      item.dgpsid = ext.dgpsid;
+      item.cmt = ext.cmt;
+      item.type = ext.type;
     }
 
-    return wpt;
+    return item;
   }
   
   double? _readDouble(Iterator<XmlEvent> iterator, String tagName) {

@@ -1,3 +1,4 @@
+import 'package:gpx/src/model/gpx_object.dart';
 import 'package:xml/xml.dart';
 
 import 'model/gpx.dart';
@@ -6,7 +7,6 @@ import 'model/link.dart';
 import 'model/metadata.dart';
 import 'model/rte.dart';
 import 'model/trk.dart';
-import 'model/trk_rte.dart';
 import 'model/wpt.dart';
 
 /// Convert Gpx into GPX
@@ -104,7 +104,7 @@ class GpxWriter {
     });
   }
 
-  void _writeTrackRoute(XmlBuilder builder, TrkRte item) {
+  void _writeTrackRoute(XmlBuilder builder, GpxObject item) {
     builder.element(item.tag, nest: () {
       _writeElement(builder, GpxTagV11.name, item.name);
       _writeElement(builder, GpxTagV11.desc, item.desc);
