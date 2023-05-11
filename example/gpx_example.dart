@@ -1,6 +1,7 @@
 import 'package:gpx/gpx.dart';
+import 'dart:io';
 
-void main() {
+Future<void> main() async {
   // create gpx-xml from object
   final gpx = Gpx();
   gpx.version = '1.1';
@@ -56,6 +57,6 @@ void main() {
       '</gpx>');
   print(xmlGpx);
 
-  final kmlItem = KmlReader().fromString(kmlString);
-  print(kmlItem);
+  final kml = GpxReader().fromString(await File('test/assets/metadata.gpx').readAsString());
+  print(KmlWriter().asString(kml, pretty: true));
 }
