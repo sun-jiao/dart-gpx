@@ -26,4 +26,7 @@ abstract class TrkRte{
   /// You can add extend GPX by adding your own elements from another schema
   /// here.
   late Map<String, String> extensions;
+
+  // Element tag.
+  late String tag;
 }

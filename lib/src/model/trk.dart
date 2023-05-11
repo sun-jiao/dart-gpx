@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:gpx/src/model/gpx_tag.dart';
 import 'package:gpx/src/model/trk_rte.dart';
 import 'package:quiver/core.dart';
 
@@ -40,6 +41,10 @@ class Trk implements TrkRte {
   /// here.
   @override
   Map<String, String> extensions;
+
+  // Element tag.
+  @override
+  String tag = GpxTagV11.track;
 
   /// A Track Segment holds a list of Track Points which are logically connected
   /// in order. To represent a single GPS track where GPS reception was lost, or

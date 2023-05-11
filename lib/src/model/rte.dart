@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:gpx/src/model/trk_rte.dart';
 import 'package:quiver/core.dart';
 
+import 'gpx_tag.dart';
 import 'link.dart';
 import 'wpt.dart';
 
@@ -41,6 +42,10 @@ class Rte implements TrkRte{
   /// here.
   @override
   Map<String, String> extensions;
+
+  // Element tag.
+  @override
+  String tag = GpxTagV11.route;
 
   /// A list of route points.
   List<Wpt> rtepts;

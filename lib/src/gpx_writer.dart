@@ -104,20 +104,20 @@ class GpxWriter {
     });
   }
 
-  void _writeTrackRoute(XmlBuilder builder, TrkRte trk) {
-    builder.element(trk is Trk ? GpxTagV11.track : GpxTagV11.route, nest: () {
-      _writeElement(builder, GpxTagV11.name, trk.name);
-      _writeElement(builder, GpxTagV11.desc, trk.desc);
-      _writeElement(builder, GpxTagV11.comment, trk.cmt);
-      _writeElement(builder, GpxTagV11.type, trk.type);
+  void _writeTrackRoute(XmlBuilder builder, TrkRte item) {
+    builder.element(item.tag, nest: () {
+      _writeElement(builder, GpxTagV11.name, item.name);
+      _writeElement(builder, GpxTagV11.desc, item.desc);
+      _writeElement(builder, GpxTagV11.comment, item.cmt);
+      _writeElement(builder, GpxTagV11.type, item.type);
 
-      _writeElement(builder, GpxTagV11.src, trk.src);
-      _writeElement(builder, GpxTagV11.number, trk.number);
+      _writeElement(builder, GpxTagV11.src, item.src);
+      _writeElement(builder, GpxTagV11.number, item.number);
 
-      _writeExtensions(builder, trk.extensions);
+      _writeExtensions(builder, item.extensions);
 
-      if (trk is Trk){
-        for (final trkseg in trk.trksegs) {
+      if (item is Trk){
+        for (final trkseg in item.trksegs) {
           builder.element(GpxTagV11.trackSegment, nest: () {
             for (final wpt in trkseg.trkpts) {
               _writePoint(builder, GpxTagV11.trackPoint, wpt);
@@ -126,13 +126,13 @@ class GpxWriter {
             _writeExtensions(builder, trkseg.extensions);
           });
         }
-      } else if (trk is Rte){
-        for (final wpt in trk.rtepts) {
+      } else if (item is Rte){
+        for (final wpt in item.rtepts) {
           _writePoint(builder, GpxTagV11.routePoint, wpt);
         }
       }
 
-      _writeLinks(builder, trk.links);
+      _writeLinks(builder, item.links);
     });
   }
 
